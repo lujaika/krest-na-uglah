@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Крест на углах</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: reading column of "cards" per planet/house; each card = nickname + two-line summary + sticky-note example, full text behind a "подробно" fold. Element colours (fire/earth/air/water) tag each card. */
+:root{
+  --bg:#f2f0f8; --paper:#ffffff; --ink:#1c1630; --muted:#665e80; --line:#dcd7ea;
+  --accent:#5a3fcf; --accent-soft:#ebe6ff;
+  --fire:#d9532a; --earth:#3f8a45; --air:#2b86c2; --water:#3b55d4;
+  --note:#fff1b8; --note-ink:#3a3000;
+  --fact:#26705d; --interp:#5a3fcf; --guess:#9a5f0c;
+  --display:"Unbounded","Segoe UI",system-ui,sans-serif;
+  --body:"Manrope","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#110e1b; --paper:#1a1628; --ink:#ece9f6; --muted:#a49cbf; --line:#2e2843;
+  --accent:#a995ff; --accent-soft:#2a2346;
+  --fire:#ff8a5c; --earth:#7bc77f; --air:#6cc0f2; --water:#8b9cff;
+  --note:#3a3217; --note-ink:#f6e7a8;
+  --fact:#6cc6ad; --interp:#a995ff; --guess:#e6b45c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#110e1b; --paper:#1a1628; --ink:#ece9f6; --muted:#a49cbf; --line:#2e2843;
+  --accent:#a995ff; --accent-soft:#2a2346;
+  --fire:#ff8a5c; --earth:#7bc77f; --air:#6cc0f2; --water:#8b9cff;
+  --note:#3a3217; --note-ink:#f6e7a8;
+  --fact:#6cc6ad; --interp:#a995ff; --guess:#e6b45c; color-scheme:dark}
+
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg); color:var(--ink); font-family:var(--body); font-size:17px; line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px))}
+.page{max-width:860px; margin:0 auto; padding-block:36px 80px}
+a{color:var(--accent)}
+
+/* hero */
+.hero{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,260px); gap:28px; align-items:center; margin-bottom:28px}
+@media (max-width:680px){.hero{grid-template-columns:minmax(0,1fr)} .hero svg{max-width:220px; margin:0 auto}}
+.eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent)}
+h1{font-family:var(--display); font-weight:800; font-size:clamp(38px,7vw,64px); line-height:1; margin:10px 0 14px; letter-spacing:-.02em; text-wrap:balance}
+.lede{font-size:19px; color:var(--muted); margin:0; max-width:46ch}
+.hero svg{width:100%; height:auto; display:block}
+svg .ring{fill:none; stroke:var(--line); stroke-width:2}
+svg .axis{stroke:var(--muted); stroke-width:1; opacity:.5}
+svg .opp{stroke:var(--fire); stroke-width:3}
+svg .sq{stroke:var(--fire); stroke-width:2; fill:none}
+svg .leg{stroke:var(--earth); stroke-width:2; stroke-dasharray:5 5}
+svg .dot{fill:var(--paper); stroke:var(--ink); stroke-width:2}
+svg .dotE{fill:var(--paper); stroke:var(--earth); stroke-width:2.5}
+svg text{fill:var(--ink); font-family:var(--mono); font-size:12px}
+svg text.big{font-size:19px}
+svg text.m{fill:var(--muted); font-size:10px}
+
+/* five phrases */
+.five{background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:20px 22px; margin:8px 0 18px}
+.five h2{margin:0 0 10px; font-size:18px}
+.five ol{margin:0; padding-left:1.3em; display:flex; flex-direction:column; gap:6px}
+.five li::marker{font-family:var(--mono); color:var(--accent)}
+
+/* nav chips */
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 10px}
+.chips a{font-family:var(--mono); font-size:13px; text-decoration:none; color:var(--ink); background:var(--paper); border:1px solid var(--line); padding:6px 12px; border-radius:999px}
+.chips a:hover,.chips a:focus-visible{border-color:var(--accent); color:var(--accent); outline:none}
+.tools{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:14px 0 6px}
+button{font:inherit; font-size:14px; font-weight:700; cursor:pointer; border-radius:999px; padding:8px 16px; border:1.5px solid var(--accent); background:var(--accent); color:var(--paper)}
+button:focus-visible{outline:3px solid var(--accent-soft); outline-offset:2px}
+.legend{display:flex; flex-wrap:wrap; gap:8px 16px; font-size:14px; color:var(--muted)}
+.tag{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:500; padding:2px 7px; border-radius:4px; border:1px solid currentColor; margin-right:6px; white-space:nowrap; vertical-align:2px}
+.t-f{color:var(--fact)} .t-i{color:var(--interp)} .t-g{color:var(--guess)}
+
+/* sections */
+h2{font-family:var(--display); font-weight:600; font-size:clamp(24px,4vw,34px); line-height:1.1; margin:56px 0 6px; text-wrap:balance; scroll-margin-top:16px}
+h2 .pn{display:block; font-family:var(--mono); font-weight:400; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:8px}
+.sub{color:var(--muted); margin:0 0 18px}
+.stack{display:flex; flex-direction:column; gap:16px}
+.grid2{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px}
+@media (max-width:680px){.grid2{grid-template-columns:minmax(0,1fr)}}
+
+/* card */
+.card{background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:18px 20px; min-width:0; display:flex; flex-direction:column; gap:10px; scroll-margin-top:16px}
+.card .head{display:flex; gap:14px; align-items:center}
+.glyph{flex:none; width:48px; height:48px; border-radius:12px; display:grid; place-items:center; font-size:24px; font-family:var(--mono); color:var(--paper); background:var(--el,var(--accent))}
+.glyph.sm{font-size:15px}
+.card h3{font-family:var(--display); font-weight:600; font-size:18px; line-height:1.25; margin:0; text-wrap:balance}
+.card .where{font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:2px}
+.nick{font-family:var(--display); font-weight:400; font-size:15px; color:var(--el,var(--accent)); margin:0}
+.tldr{font-size:17px; font-weight:500; margin:0}
+.life{background:var(--note); color:var(--note-ink); border-radius:4px 14px 14px 14px; padding:12px 14px; font-size:15.5px; transform:rotate(-.4deg)}
+.life b{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; display:block; margin-bottom:2px}
+.el-fire{--el:var(--fire)} .el-earth{--el:var(--earth)} .el-air{--el:var(--air)} .el-water{--el:var(--water)}
+details{border-top:1px dashed var(--line); padding-top:8px}
+summary{cursor:pointer; font-weight:700; font-size:14px; color:var(--accent); list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+ "; font-family:var(--mono)}
+details[open] summary::before{content:"− "}
+summary:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:4px}
+details p{margin:10px 0}
+.pros{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:10px 0}
+@media (max-width:560px){.pros{grid-template-columns:minmax(0,1fr)}}
+.pros div{background:var(--accent-soft); border-radius:10px; padding:10px 12px; font-size:15px}
+.pros b{display:block; font-size:12px; font-family:var(--mono); letter-spacing:.08em; text-transform:uppercase; margin-bottom:2px}
+
+/* tables */
+.tbl{overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--paper); margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:15px}
+th,td{text-align:left; padding:8px 12px; border-bottom:1px solid var(--line); vertical-align:top}
+th{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:500}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap}
+
+/* loudness meter */
+.meter{display:flex; align-items:center; gap:10px; font-family:var(--mono); font-size:12px; color:var(--muted)}
+.bar{flex:1; height:8px; border-radius:99px; background:var(--line); overflow:hidden; max-width:220px}
+.bar i{display:block; height:100%; background:var(--el,var(--accent)); border-radius:99px}
+.kind{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; padding:2px 8px; border-radius:99px; background:var(--accent-soft); color:var(--ink)}
+.house-n{font-family:var(--display); font-weight:800; font-size:22px; color:var(--paper); background:var(--el,var(--accent)); width:44px; height:44px; border-radius:10px; display:grid; place-items:center; flex:none}
+.note{font-size:14.5px; color:var(--muted)}
+.contra{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px}
+@media (max-width:560px){.contra{grid-template-columns:minmax(0,1fr)}}
+.contra div{background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:12px 14px; font-size:15px}
+.contra b{font-family:var(--display); font-weight:600; display:block; margin-bottom:4px}
+footer{margin-top:56px; padding-top:18px; border-top:1px solid var(--line); font-size:14px; color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<header class="hero">
+  <div>
+    <div class="eyebrow">Разбор натальной карты · полная версия</div>
+    <h1>Крест на углах</h1>
+    <p class="lede">Козерог по сути, Дева по манере, Рыбы по чувствам, Марс на самой вершине карты. И все четыре угла заняты. Сейчас разберёмся, что с этим делать.</p>
+  </div>
+  <svg viewBox="0 0 320 320" role="img" aria-label="Схема креста на углах: Асцендент в Деве, Луна на Десценденте, Марс на MC, Плутон у IC">
+    <circle class="ring" cx="160" cy="160" r="118"/>
+    <line class="axis" x1="30" y1="160" x2="290" y2="160"/>
+    <line class="axis" x1="160" y1="30" x2="160" y2="290"/>
+    <line class="opp" x1="160" y1="42" x2="160" y2="278"/>
+    <polyline class="sq" points="160,42 278,160 160,278"/>
+    <line class="leg" x1="42" y1="160" x2="160" y2="42"/>
+    <line class="leg" x1="42" y1="160" x2="160" y2="278"/>
+    <circle class="dot" cx="160" cy="42" r="16"/><text class="big" x="160" y="49" text-anchor="middle">♂</text>
+    <circle class="dot" cx="278" cy="160" r="16"/><text class="big" x="278" y="167" text-anchor="middle">☽</text>
+    <circle class="dot" cx="160" cy="278" r="16"/><text class="big" x="160" y="285" text-anchor="middle">♇</text>
+    <circle class="dotE" cx="42" cy="160" r="16"/><text x="42" y="164" text-anchor="middle">Asc</text>
+    <text class="m" x="160" y="15" text-anchor="middle">MC · Близнецы</text>
+    <text class="m" x="160" y="313" text-anchor="middle">IC · Стрелец</text>
+    <text class="m" x="278" y="192" text-anchor="middle">Dsc · Рыбы</text>
+    <text class="m" x="42" y="192" text-anchor="middle">Дева</text>
+  </svg>
+</header>
+
+<section class="five" aria-labelledby="five-h">
+  <h2 id="five-h">Карта в пяти фразах</h2>
+  <ol>
+    <li>Снаружи собранная Дева, внутри Рыбы, которые чувствуют всё и всех.</li>
+    <li>Главный двигатель — Марс на вершине карты против Плутона в корнях: воля, упрямство и «я дожму».</li>
+    <li>Всё напряжение стекается в Луну, то есть в эмоции и близкие отношения.</li>
+    <li>Выход из любого шторма — Дева: список, план, дело руками.</li>
+    <li>Скрытый босс карты — внутренний редактор (Меркурий + Сатурн). Умный, но любит говорить «сыро».</li>
+  </ol>
+</section>
+
+<nav class="chips" aria-label="Разделы">
+  <a href="#portrait">Портрет</a><a href="#big3">Солнце · Луна · Асц</a><a href="#planets">Планеты</a><a href="#houses">Дома</a><a href="#aspects">Аспекты</a><a href="#love">Любовь</a><a href="#career">Карьера и деньги</a><a href="#honest">Честно о себе</a><a href="#unusual">Необычное</a><a href="#final">Итог</a><a href="#data">Таблицы</a>
+</nav>
+<div class="tools">
+  <button type="button" id="toggle-all">Раскрыть всё подробно</button>
+  <div class="legend">
+    <span><span class="tag t-f">Факт</span>астрономия</span>
+    <span><span class="tag t-i">Трактовка</span>астрологическая традиция</span>
+    <span><span class="tag t-g">Предположение</span>как это может выглядеть в жизни</span>
+  </div>
+</div>
+<p class="note">Астрология — символический язык, а не научно доказанный метод. Здесь нет ни одного «так будет», только «так это читают» и «так это может выглядеть». Положения проверены независимым пересчётом. Трактовки опираются на книги: Х. Сасспортас «Двенадцать домов»; Л. Грин и Х. Сасспортас «Светила»; Л. Грин «Сатурн»; С. Томпкинс «Аспекты в астрологии»; Б. Тирни «Динамика аспектного анализа»; С. Арройо «Астрология, психология и четыре стихии»; Э. Салливан «Ретроградные планеты».</p>
+
+<!-- ================= PORTRAIT ================= -->
+<h2 id="portrait"><span class="pn">Часть 1</span>Общий портрет</h2>
+<p class="sub">Сначала карта целиком, потом по деталям.</p>
+<div class="stack">
+
+<article class="card el-fire">
+  <div class="head"><div class="glyph">✚</div><div><h3>Крест на четырёх углах</h3><div class="where">Асц · Десцендент · MC · IC — все заняты</div></div></div>
+  <p class="nick">Главная фишка карты</p>
+  <p class="tldr">Внутри кипит больше, чем видно снаружи. А снаружи видна собранная девушка, у которой всё под контролем, и это не притворство, а способ справляться.</p>
+  <div class="life"><b>Из жизни</b>Эмоционально штормит, а ты в два часа ночи наводишь идеальный порядок на столе и пишешь список дел на неделю.</div>
+  <details><summary>Подробно</summary>
+    <p>У карты четыре угла. Асцендент показывает, как ты входишь в мир. Десцендент — кого встречаешь в отношениях. MC — публичная роль и призвание. IC — корни и дом. Обычно на углах одна планета или ни одной. У тебя заняты все четыре.</p>
+    <p><span class="tag t-f">Факт</span>Луна в Рыбах на Десценденте (орбис 1°), Марс в Близнецах на MC (1°), Плутон в Стрельце у IC (5°), Асцендент в Деве. Все на последних градусах мутабельных знаков, связаны квадратами и оппозициями.</p>
+    <p><span class="tag t-i">Трактовка</span>Внутри креста есть тау-квадрат: Марс ☍ Плутон, вершина в Луне. Это две планеты в оппозиции (перетягивание каната) и третья в квадрате к обеим, через неё накопленный стресс ищет выход. У Тирни и Томпкинс важна и пустая точка напротив вершины, через которую напряжение разряжается конструктивно. У тебя она почти совпадает с Асцендентом в Деве. Значит, самое сильное напряжение карты проходит через эмоции (Луна в Рыбах), а выход ищет через Деву: порядок, анализ, конкретное дело.</p>
+    <p><span class="tag t-g">Предположение</span>Ты вряд ли человек «ровной интенсивности». Когда эмоционально штормит, ты, вероятно, начинаешь что-то упорядочивать: писать списки, разбирать ситуацию по пунктам. И это работает.</p>
+  </details>
+</article>
+
+<article class="card el-air">
+  <div class="head"><div class="glyph">⇄</div><div><h3>Стихии и кресты</h3><div class="where">земля + воздух · мутабельность на максимуме</div></div></div>
+  <p class="nick">Голова и руки, плюс режим «переключаюсь за секунду»</p>
+  <p class="tldr">Быстро подстраиваешься под людей и обстоятельства. Устаёшь не от объёма работы, а от многозадачности.</p>
+  <div class="life"><b>Из жизни</b>Пять вкладок, три чата, конспект и сериал на фоне. Всё успеваешь, но к вечеру голова гудит.</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>Личные точки: земля — Солнце и Асцендент; воздух — Меркурий, Марс, MC; вода — Луна; огонь — Венера. Мутабельные знаки занимают Луна, Венера, Марс, Асцендент, MC и Сатурн. Кардинальные — Солнце и Юпитер.</p>
+    <p><span class="tag t-i">Трактовка</span>По Арройо, мутабельность — это гибкость, адаптивность и умение переключаться, а обратная сторона — рассеянность и нервное напряжение. Воздух и земля дают «голову и руки». Кардинальное Солнце в Козероге добавляет цель.</p>
+  </details>
+</article>
+
+<article class="card el-earth">
+  <div class="head"><div class="glyph sm">☿♄</div><div><h3>Скрытый босс: Меркурий и Сатурн</h3><div class="where">взаимная рецепция · квинконс 0,9° · Сатурн в 12-м доме</div></div></div>
+  <p class="nick">Внутренний редактор</p>
+  <p class="tldr">В голове живёт строгий редактор, который проверяет каждую мысль. Снаружи этого почти не видно, люди замечают только результат.</p>
+  <div class="life"><b>Из жизни</b>Переписать сообщение три раза перед отправкой. Перед «я умею» мысленно проверить, точно ли умеешь.</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>Меркурий стоит в Водолее, знаке Сатурна, а Сатурн в Деве, знаке Меркурия. Это взаимная рецепция: планеты как бы живут в домах друг у друга. Между ними квинконс, орбис 0,9°. Сатурн управляет Солнцем, Юпитером, Меркурием, Нептуном и Северным узлом. Меркурий управляет Асцендентом, MC и Сатурном. Почти вся карта «отчитывается» этой паре, а Сатурн сидит в 12-м доме, доме закулисного.</p>
+    <p><span class="tag t-i">Трактовка</span>Мышление и внутренний контролёр тесно сплетены. Рецепция говорит, что они могут сотрудничать, квинконс — что это требует постоянной подстройки. 12-й дом, по Сасспортасу, — то, что работает «из-за кулис», часто неосознанно.</p>
+  </details>
+</article>
+
+<article class="card el-water">
+  <div class="head"><div class="glyph">◐</div><div><h3>Полушария</h3><div class="where">7 из 10 планет под горизонтом и на западе карты</div></div></div>
+  <p class="nick">Нужна своя нора</p>
+  <p class="tldr">Внутренняя жизнь и дом важнее сцены. А важные повороты приходят через встречи с людьми.</p>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-i">Трактовка</span>Это распространённая, но не универсальная трактовка (например, у Роберта Хэнда). Акцент на нижней половине — внутренняя жизнь, дом, личное пространство. Акцент на западе — многое раскрывается через других людей.</p>
+  </details>
+</article>
+</div>
+
+<h2 style="font-size:22px;margin-top:36px">Противоречия</h2>
+<div class="contra">
+  <div><b>Контроль ↔ растворение</b>Дева с Козерогом хотят порядка, Луна в Рыбах — слияния и свободного течения.</div>
+  <div><b>Скорость ↔ глубина</b>Марс в Близнецах — «быстро и на ходу». Плутон напротив — «до дна и навсегда».</div>
+  <div><b>Сцена ↔ нора</b>Марс на вершине заметен и подвижен, остальная карта домашняя и закрытая.</div>
+  <div><b>Сама ↔ вдвоём</b>Солнце в Козероге хочет справляться само, Луна на Десценденте эмоционально живёт в партнёре.</div>
+</div>
+
+<!-- ================= BIG 3 ================= -->
+<h2 id="big3"><span class="pn">Часть 1</span>Солнце, Луна, Асцендент</h2>
+<p class="sub">Суть, чувства и манера. Как они уживаются — в самом конце раздела.</p>
+<div class="stack">
+
+<article class="card el-earth" id="sun">
+  <div class="head"><div class="glyph">☉</div><div><h3>Солнце в Козероге</h3><div class="where">4-й дом · ✶ Луна · △ Асц · ⚻ Марс</div></div></div>
+  <p class="nick">«Тихий директор»</p>
+  <p class="tldr">Ты ответственная и взрослая не по годам, а сияешь в своём кругу, а не на сцене. Ценность себя слишком легко измерить полезностью.</p>
+  <div class="life"><b>Из жизни</b>В школе тебе доверяли ключи от кабинета и сбор денег на подарок учителю. Не потому что ты рвалась командовать, а потому что «ну она же не забудет».</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>4-й дом. Аспекты: секстиль Луне (4,5°), тригон Асценденту (3,5°), квинконс Марсу (2,9°), точный минорный полуторный квадрат Сатурну. Управитель — ретроградный Сатурн в Деве в 12-м доме. Юпитер и Плутон в том же доме, но в соединение с Солнцем не входят.</p>
+    <p><span class="tag t-i">Трактовка</span>Козерог — структура, ответственность, долгий горизонт, уважение к результату. В «Светилах» Грин описывает это Солнце как идентичность, которая строится через достижения и ощущение «я могу на себя положиться». 4-й дом — корни, семья, внутренний фундамент. Управитель в 12-м: источник силы работает тихо, иногда в форме самокритики. Квинконс Марсу: то, как ты действуешь (быстро и в разные стороны), не всегда совпадает с тем, кем ты хочешь быть (последовательной). Тригон Асценденту: тебя воспринимают примерно такой, какая ты есть.</p>
+    <div class="pros"><div><b>Сила</b>Надёжность, точная суховатая самоирония, терпение ради цели.</div><div><b>Сложность</b>«Отдых надо заслужить», трудно просить о помощи.</div></div>
+    <p><span class="tag t-g">Предположение</span>Дом и семья — не фон, а тема, о которой ты много думаешь. Например, желание когда-нибудь построить «свой правильный дом», не обязательно повторяя родительский.</p>
+  </details>
+</article>
+
+<article class="card el-water" id="moon">
+  <div class="head"><div class="glyph">☽</div><div><h3>Луна в Рыбах на Десценденте</h3><div class="where">7-й дом · □ Марс · □ Плутон · ✶ Солнце</div></div></div>
+  <p class="nick">«Губка с характером»</p>
+  <p class="tldr">Ты чувствуешь людей насквозь и очень мягкая с близкими. Но если на тебя давят или предают, реакция будет сильнее, чем ты сама от себя ждёшь.</p>
+  <div class="life"><b>Из жизни</b>Подруга пишет «всё нормально», а ты по одной точке в конце понимаешь, что ничего не нормально.</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>7-й дом, в 1,1° от Десцендента. Квадрат Марсу (1,6°), квадрат Плутону (2,1°), оппозиция Асценденту, секстиль Солнцу. Широкое соединение с Ураном — только оттенок. Управитель в современной системе — Нептун в 5-м доме, в классической — Юпитер в Козероге в 4-м.</p>
+    <p><span class="tag t-i">Трактовка</span>Рыбы — проницаемость, эмпатия, воображение, тонкие границы между «моё» и «чужое». Луна на Десценденте: эмоциональные потребности ищут удовлетворения через близкого другого и проецируются на него. Сасспортас описывает планеты в 7-м доме как качества, которые человек сначала узнаёт в партнёрах, а потом в себе. Томпкинс связывает Луну с Плутоном с темами контроля, ревности и чувств «всё или ничего», Луну с Марсом — с быстрым вспыхиванием. Секстиль Солнцу — хорошая новость: желания и потребности договариваются.</p>
+    <div class="pros"><div><b>Сила</b>Чутьё на людей, сострадание, воображение, умение быть рядом в трудный момент.</div><div><b>Сложность</b>Впитываешь чужие настроения, растворяешься в близких, чувства копятся и выходят взрывом.</div></div>
+    <p class="note">Классически Луна связана и с образом матери, а квадрат к Плутону трактуют как тему сильного, иногда контролирующего влияния. Это символ, а не утверждение о твоей реальной маме.</p>
+    <p><span class="tag t-g">Предположение</span>После эмоционального взрыва утром ты, вероятно, разберёшь всё по пунктам, как Дева.</p>
+  </details>
+</article>
+
+<article class="card el-earth" id="asc">
+  <div class="head"><div class="glyph sm">Asc</div><div><h3>Асцендент в Деве</h3><div class="where">управитель Меркурий в 5-м · □ Марс 0,4° · □ Плутон</div></div></div>
+  <p class="nick">«Вежливый сканер»</p>
+  <p class="tldr">Первое впечатление: спокойная, внимательная, закрытая. Через пятнадцать минут выясняется, что у тебя острый язык и ты уже всё про всех заметила.</p>
+  <div class="life"><b>Из жизни</b>Ты уже увидела, что у собеседника развязан шнурок, он нервничает и сочиняет про выходные. Некоторых это восхищает, некоторых немного пугает.</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>Управитель Меркурий в Водолее в 5-м доме. Тригон Солнцу, квадрат Марсу (0,4°) и Плутону (3,1°), оппозиция Луне. Сатурн тоже в Деве, но в 18° от Асцендента, это не соединение.</p>
+    <p><span class="tag t-i">Трактовка</span>Дева на Асценденте — внимание к деталям, наблюдательность, сдержанность в первом контакте, желание быть полезной. Управитель в 5-м доме связывает подачу себя с творчеством и интеллектуальной игрой. Точный квадрат Марса добавляет колкости, квадрат Плутона — интенсивности: людей «цепляет» твоё присутствие, даже когда ты ничего особенного не делаешь.</p>
+  </details>
+</article>
+
+<article class="card el-air">
+  <div class="head"><div class="glyph">△</div><div><h3>Как эта троица уживается</h3><div class="where">Солнце △ Асц · Луна ☍ Асц · Солнце ✶ Луна</div></div></div>
+  <p class="nick">Не выбирать между «контролирую» и «чувствую»</p>
+  <p class="tldr">Для мира ты разумная, компетентная и ироничная. Рыбья часть открывается двум-трём людям за всю жизнь, и только они знают, как глубоко ты чувствуешь.</p>
+  <div class="life"><b>Инструмент</b>Превращать чувства в дело: текст, рисунок, помощь кому-то, структура. Это и есть «пустая нога» тау-квадрата в Деве.</div>
+  <details><summary>Подробно</summary>
+    <div class="tbl"><table><thead><tr><th></th><th>Знак</th><th>Где</th><th>Чего хочет</th></tr></thead><tbody>
+      <tr><td>Солнце</td><td>Козерог</td><td>4 дом, корни</td><td>Опоры, результата, уважения</td></tr>
+      <tr><td>Луна</td><td>Рыбы</td><td>7 дом, партнёр</td><td>Близости, понимания без слов</td></tr>
+      <tr><td>Асцендент</td><td>Дева</td><td>1 дом, облик</td><td>Порядка, точности, пользы</td></tr></tbody></table></div>
+    <p><span class="tag t-i">Трактовка</span>Солнце и Асцендент — земля в тригоне: суть и подача согласованы. Луна стоит напротив Асцендента, и эмоции живут «на другом берегу», в отношениях. Ось Дева–Рыбы классически описывают как «порядок против хаоса» или «анализ против веры».</p>
+  </details>
+</article>
+</div>
+
+<!-- ================= PLANETS ================= -->
+<h2 id="planets"><span class="pn">Часть 2</span>Планеты</h2>
+<p class="sub">У каждой планеты своё прозвище. Цвет карточки — стихия знака.</p>
+<div class="grid2">
+
+<article class="card el-air">
+  <div class="head"><div class="glyph">☿</div><div><h3>Меркурий в Водолее</h3><div class="where">5-й дом · управляет Асц и MC</div></div></div>
+  <p class="nick">«Изобретатель с редактором»</p>
+  <p class="tldr">Ум оригинальный, системный и упрямый. Путь к призванию идёт через слова и идеи, которые приносят удовольствие.</p>
+  <div class="life"><b>Из жизни</b>«Давай разберёмся логически», и у собеседника дёргается глаз. Половина написанного прячется «в стол», потому что редактор сказал «сыро».</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>Директный и быстрый. Управляет 1-м, 10-м и 12-м домами. Квинконс Сатурну (0,9°) при взаимной рецепции, минорный полуторный квадрат Марсу.</p>
+    <p><span class="tag t-i">Трактовка</span>Водолей — системный, независимый ум, любит идеи и нестандартные решения. Знак фиксированный, поэтому сложившееся мнение сдвинуть трудно. 5-й дом: думать интересно ради самого процесса. Меркурий отвечает и за подачу себя, и за карьеру, а стоит в доме творчества. Значит, путь к реализации идёт через удовольствие, а не через «надо».</p>
+    <div class="pros"><div><b>Сила</b>Оригинальность, остроумие, видеть систему в хаосе.</div><div><b>Сложность</b>Спор из принципа, холодноватость, цензор «а вдруг глупо».</div></div>
+  </details>
+</article>
+
+<article class="card el-fire">
+  <div class="head"><div class="glyph">♀</div><div><h3>Венера в Стрельце</h3><div class="where">3-й дом · □ Уран · ✶ Нептун</div></div></div>
+  <p class="nick">«Путешественница по переписке»</p>
+  <p class="tldr">Влюбляешься в манеру говорить и в чувство юмора. Скука для тебя хуже ссоры, а свобода в отношениях обязательна.</p>
+  <div class="life"><b>Из жизни</b>Переписка до трёх ночи, а потом «он оказался обычным». Деньги охотнее уходят на поездки, книги и курсы, чем на вещи.</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>Управляет 2-м и 9-м домами. Квадрат Урану (1,4°), секстиль Нептуну (3,5°), широкая оппозиция Марсу как фон.</p>
+    <p><span class="tag t-i">Трактовка</span>Стрелец любит свободу, честность, движение и людей, расширяющих горизонт. 3-й дом — симпатия через разговор и интеллектуальный флирт. Квадрат Урану (Томпкинс): внезапные увлечения и охлаждения, притяжение к необычным людям. Секстиль Нептуну даёт тонкий вкус и романтическое воображение, а с ним способность человека «дорисовать».</p>
+    <div class="pros"><div><b>Сила</b>Обаяние в разговоре, щедрость, широта вкусов.</div><div><b>Сложность</b>Интерес быстро гаснет, трудно с теми, кто «держит».</div></div>
+  </details>
+</article>
+
+<article class="card el-air">
+  <div class="head"><div class="glyph">♂</div><div><h3>Марс в Близнецах, ретро, на MC</h3><div class="where">10-й дом · ☍ Плутон · □ Луна · □ Асц</div></div></div>
+  <p class="nick">«Спорщица на сцене»</p>
+  <p class="tldr">Самая заметная планета карты. Воля, острый язык и «меня нельзя заставить, но можно увлечь».</p>
+  <div class="life"><b>Из жизни</b>В групповом проекте ты либо тащишь всё сама, либо молчишь, а потом говоришь одну фразу, после которой все переделывают. Ответила сгоряча — три дня прокручиваешь, как надо было.</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>В 1,3° от MC, ретроградный. Управляет 8-м и классически 3-м домами. Оппозиция Плутону (3,6°), квадрат Луне (1,6°), квадрат Асценденту (0,4°), квинконс Солнцу (2,9°).</p>
+    <p><span class="tag t-i">Трактовка</span>Близнецы действуют словом, скоростью, многозадачностью. Трактовки ретроградности расходятся. Распространённая современная линия (Салливан): энергия сначала идёт внутрь, к начатому возвращаются и переделывают, гнев копится. Марс на MC — инициатива и соревновательность в публичной роли, классически и трения с авторитетами. Оппозиция Плутону: огромная выносливость, воля идти до конца и темы власти.</p>
+    <div class="pros"><div><b>Сила</b>Энергия для работы со словом, умение отстоять позицию, восстанавливаться после поражений.</div><div><b>Сложность</b>Колкость, борьба за контроль, спринт в последнюю ночь, десять проектов сразу.</div></div>
+  </details>
+</article>
+
+<article class="card el-earth">
+  <div class="head"><div class="glyph">♃</div><div><h3>Юпитер в Козероге</h3><div class="where">4-й дом · △ Сатурн · ☌ Плутон (спорно)</div></div></div>
+  <p class="nick">«Удача по расписанию»</p>
+  <p class="tldr">Удача приходит к тем, кто вкладывается долго. Спокойнее, когда есть план и запас.</p>
+  <div class="life"><b>Из жизни</b>Уют и порядок в доме для тебя не мещанство, а источник силы. Запас денег, времени и вариантов успокаивает лучше любых слов.</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>Управляет 4-м и классически 7-м домами, то есть ещё и Луной. Тригон Сатурну (2,1°), спорное соединение с Плутоном (6,3°). Оба аспекта были у всех сверстников.</p>
+    <p><span class="tag t-i">Трактовка</span>Юпитер в Козероге классически «в падении». Это не «плохо»: рост через усилие и реализм, практичный оптимизм. 4-й дом — дом как источник силы. Тригон Сатурну — способность строить надолго.</p>
+  </details>
+</article>
+
+<article class="card el-earth">
+  <div class="head"><div class="glyph">♄</div><div><h3>Сатурн в Деве, ретро</h3><div class="where">12-й дом · управитель Солнца</div></div></div>
+  <p class="nick">«Внутренний ОТК»</p>
+  <p class="tldr">Строгий контроль качества работает внутри, без перерывов. Тревога снижается, как только начинаешь конкретно что-то делать.</p>
+  <div class="life"><b>Из жизни</b>Тебя хвалят, а внутри звучит «да, но там ошибка в третьем абзаце».</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>Управляет 5-м домом и перехваченным Козерогом в 4-м. Тригон Юпитеру, квинконс Меркурию при рецепции, оппозиция Урану (поколенческая), минорный полуторный квадрат Солнцу.</p>
+    <p><span class="tag t-i">Трактовка</span>Дева — перфекционизм, страх ошибки, ответственность через пользу. 12-й дом — закулисное. Лиз Грин связывает это положение со страхом перед хаосом и потребностью строить структуру во внутреннем мире. Ретроградность: строгий авторитет «встроен» внутрь.</p>
+    <div class="pros"><div><b>Сила</b>Самодисциплина, умение работать без аплодисментов.</div><div><b>Сложность</b>Фоновая тревога, «недостаточно хорошо», трудно отдыхать.</div></div>
+  </details>
+</article>
+
+<article class="card el-water">
+  <div class="head"><div class="glyph">♅</div><div><h3>Уран в Рыбах</h3><div class="where">6-й дом · □ Венера · ☍ Сатурн</div></div></div>
+  <p class="nick">«Аллергия на будильник в 7:00»</p>
+  <p class="tldr">Жёсткий график «с 9 до 18» ощущается как клетка. Нужен режим, но выбранный самой.</p>
+  <div class="life"><b>Из жизни</b>Работа рывками: три дня ничего, потом за ночь сделано всё. И неожиданные знакомства прямо в учебных буднях.</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-i">Трактовка</span>Уран в 6-м доме: рутина не терпит однообразия, интерес к технологиям и альтернативным подходам, классически чувствительная нервная система. Знак поколенческий. Квадрат Венере связывает будни и симпатии.</p>
+  </details>
+</article>
+
+<article class="card el-air">
+  <div class="head"><div class="glyph">♆</div><div><h3>Нептун в Водолее</h3><div class="where">5-й дом · ✶ Венера · управитель Луны</div></div></div>
+  <p class="nick">«Муза в наушниках»</p>
+  <p class="tldr">Творчество — не хобби, а способ переварить чувства. Риск: влюбиться в чей-то потенциал, а не в человека.</p>
+  <div class="life"><b>Из жизни</b>«Он же такой талантливый, просто не раскрылся».</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-i">Трактовка</span>Нептун в 5-м доме — вдохновение, игра, романтическая идеализация. Он управляет Луной, поэтому эмоциям нужен выход через создание чего-то: музыки, текста, образа, роли. Знак поколенческий.</p>
+  </details>
+</article>
+
+<article class="card el-fire">
+  <div class="head"><div class="glyph">♇</div><div><h3>Плутон в Стрельце у IC</h3><div class="where">4-й дом · ☍ Марс · □ Луна · □ Асц</div></div></div>
+  <p class="nick">«Реактор в подвале»</p>
+  <p class="tldr">Ощущение «я выдержу почти всё». Тема семьи и корней глубокая и сильно влияет на то, кем ты становишься.</p>
+  <div class="life"><b>Из жизни</b>Ты, возможно, рано стала «взрослой» в каких-то вопросах. Что именно стоит за этим символом, знает только твой опыт.</div>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-i">Трактовка</span>Плутон у IC — глубинная тема рода и корней. Сасспортас описывает её как сильные, иногда скрытые семейные процессы и мощное внутреннее ядро. Плутон стоит на последнем градусе знака. Некоторые придают этому значение («анаретический градус»), но техника не общепринятая. В тау-квадрате Плутон даёт Луне глубину, а Марсу упрямство.</p>
+  </details>
+</article>
+</div>
+
+<article class="card el-air" style="margin-top:16px">
+  <div class="head"><div class="glyph sm">☊☋</div><div><h3>Лунные узлы</h3><div class="where">Северный в Водолее, 5-й дом · Южный во Льве, 11-й</div></div></div>
+  <p class="nick">«Из звезды компании — в автора»</p>
+  <p class="tldr">Привычно быть заметной в группе. Расти — значит творить своё, необычное, ради себя, а не ради аплодисментов.</p>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-i">Трактовка</span>Трактовки узлов расходятся сильнее всего: от «прошлых жизней» до психологической пары «привычное и новое». Здесь использован второй вариант, и далеко идущих выводов лучше не делать.</p>
+  </details>
+</article>
+
+<!-- ================= HOUSES ================= -->
+<h2 id="houses"><span class="pn">Часть 3</span>Двенадцать домов</h2>
+<p class="sub">Дом — это сфера жизни. Пустой дом не значит пустую жизнь: тогда тему ведёт управитель знака на куспиде. Козерог и Рак у тебя «перехвачены», то есть целиком спрятаны внутри домов (4-го и 10-го). Это обычное дело на северных широтах, и смысл перехватов у астрологов спорный.</p>
+<div class="grid2">
+<article class="card el-earth"><div class="head"><div class="house-n">1</div><div><h3>Я и мой облик</h3><div class="where">Дева · пусто · управитель Меркурий в 5-м</div></div></div>
+  <p class="tldr">Самооценка растёт, когда что-то придумано и сделано своими руками или головой.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Управитель в 5-м доме связывает «кто я» с «что я создаю».</p><p><span class="tag t-g">Предположение</span>В периоды «просто живу по расписанию» самоощущение заметно проседает.</p></details></article>
+
+<article class="card el-air"><div class="head"><div class="house-n">2</div><div><h3>Деньги и ценности</h3><div class="where">Весы · пусто · Венера в 3-м □ Уран</div></div></div>
+  <p class="tldr">Заработок через слова, общение и обучение. Доход скорее скачками, чем ровно.</p>
+  <div class="life"><b>Совет карты</b>Финансовая подушка: Уран любит сюрпризы.</div>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Весы связывают деньги с эстетикой и партнёрством. Управитель в 3-м — тексты, обучение, посредничество. Квадрат Урану — неровный доход, секстиль Нептуну — деньги через творчество и образ.</p><p><span class="tag t-g">Предположение</span>Подработки, проекты и фриланс интереснее ровной зарплаты.</p></details></article>
+
+<article class="card el-water"><div class="head"><div class="house-n">3</div><div><h3>Общение и учёба</h3><div class="where">Скорпион · Венера</div></div></div>
+  <p class="tldr">Разговоры «ни о чём» утомляют, разговоры по душе до утра заряжают.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Скорпион даёт глубину в разговоре и интерес к скрытому. Венера здесь — обаяние в общении и любовь к учёбе. Управители связывают сферу с домом (Плутон) и карьерой (Марс на MC): слово становится профессиональным инструментом.</p></details></article>
+
+<article class="card el-fire"><div class="head"><div class="house-n">4</div><div><h3>Дом и корни</h3><div class="where">Стрелец + Козерог · Солнце, Юпитер, Плутон</div></div></div>
+  <p class="tldr">Самый населённый дом карты, главная точка опоры. Свой дом хочется построить по своим правилам.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Солнце делает корни центром идентичности, Юпитер — источником защищённости, Плутон — местом глубоких перемен. Стрелец добавляет свободу, перехваченный Козерог — ответственность, к которой приходят не сразу. Управитель Юпитер стоит в своём же доме.</p><p><span class="tag t-g">Предположение</span>Переезды могут ощущаться как переходы в новый этап жизни.</p></details></article>
+
+<article class="card el-air"><div class="head"><div class="house-n">5</div><div><h3>Творчество и любовь</h3><div class="where">Водолей · Меркурий, Нептун, Сев. узел</div></div></div>
+  <p class="tldr">Сильная тяга к своему проекту и тот же внутренний цензор, который мешает его показать.</p>
+  <div class="life"><b>Из жизни</b>Блог, тексты, музыка, дизайн. Готово на 90%, но «ещё не время выкладывать».</div>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Меркурий делает самовыражение словесным, Нептун — вдохновенным и идеализирующим. Северный узел, по одной из трактовок, указывает сюда как на направление роста. Управитель Сатурн в 12-м: творчество рождается в уединении.</p></details></article>
+
+<article class="card el-water"><div class="head"><div class="house-n">6</div><div><h3>Работа и режим</h3><div class="where">Рыбы · Уран</div></div></div>
+  <p class="tldr">Удалёнка и свободный график звучат естественно. Самочувствие сильно зависит от атмосферы.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Рыбы размывают границы рабочего дня, Уран требует гибкости. Управители указывают на работу из дома (Юпитер в 4-м) и работу в удовольствие (Нептун в 5-м).</p><p><span class="tag t-g">Предположение</span>Стоит беречь сон и нервную систему.</p></details></article>
+
+<article class="card el-water"><div class="head"><div class="house-n">7</div><div><h3>Партнёрство</h3><div class="where">Рыбы · Луна на куспиде</div></div></div>
+  <p class="tldr">Нужен человек, с которым можно снять Деву-броню. Тянет к чувствительным и творческим людям, важно не раствориться.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Луна делает отношения жизненно важными, Рыбы добавляют идеализацию и готовность жертвовать. Классический управитель в 4-м доме: партнёр как «тот, с кем строить дом». Современный в 5-м: романтика и творчество. Подробно — в разделе о любви (часть 5).</p></details></article>
+
+<article class="card el-fire"><div class="head"><div class="house-n">8</div><div><h3>Кризисы и глубина</h3><div class="where">Овен · пусто · Марс на MC ☍ Плутон</div></div></div>
+  <p class="tldr">В трудной ситуации включается режим «действовать немедленно». Помогает, но иногда стоит сначала выдохнуть.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>8-й дом — близость, общие деньги, трансформация. Управитель на MC связывает перемены с карьерой: профессиональные повороты могут переживаться как маленькие «перерождения».</p></details></article>
+
+<article class="card el-earth"><div class="head"><div class="house-n">9</div><div><h3>Мировоззрение и дорога</h3><div class="where">Телец · пусто · Венера в 3-м</div></div></div>
+  <p class="tldr">Учиться приятно, если предмет «вкусный». Путешествия ради впечатлений и комфорта, а не экстрима.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Телец делает убеждения практичными, знание ценно, когда применимо. Управитель Венера связывает учёбу с удовольствием.</p></details></article>
+
+<article class="card el-air"><div class="head"><div class="house-n">10</div><div><h3>Карьера</h3><div class="where">Близнецы + Рак · Марс, Парс Фортуны</div></div></div>
+  <p class="tldr">Профессии, где можно говорить, писать, спорить, придумывать и не сидеть на месте. Лучше своя роль, чем жёсткий начальник.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Близнецы — слово, информация, разнообразие. Марс добавляет инициативу. Парс Фортуны в 10-м доме классически благоприятен для реализации. Перехваченный Рак: забота и эмоциональная вовлечённость в работе раскрываются не сразу. Подробно — в части 5.</p></details></article>
+
+<article class="card el-fire"><div class="head"><div class="house-n">11</div><div><h3>Друзья и мечты</h3><div class="where">Лев · Южный узел</div></div></div>
+  <p class="tldr">Немного друзей, но «как родные». Легко быть душой компании, но расти стоит в своём творчестве.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Лев даёт тёплые яркие дружбы. Управитель Солнце в 4-м доме делает друзей почти семьёй. Южный узел здесь — зона привычного и комфортного.</p></details></article>
+
+<article class="card el-earth"><div class="head"><div class="house-n">12</div><div><h3>Скрытое и тишина</h3><div class="where">Дева · Сатурн</div></div></div>
+  <p class="tldr">Нужно время наедине с собой, без людей и уведомлений. Дневник может работать как суперсила.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Здесь живёт внутренний контролёр. Дева подсказывает, что тревога уменьшается через порядок и ремесло. Управитель Меркурий в 5-м: выход из «внутренней кельи» лежит через творчество и слова.</p></details></article>
+</div>
+
+<!-- ================= ASPECTS ================= -->
+<h2 id="aspects"><span class="pn">Часть 4</span>Аспекты: кто с кем спорит</h2>
+<p class="sub">Аспект — угол между планетами, то есть то, как две части тебя разговаривают. Полоска «громкость» показывает точность аспекта: чем меньше орбис, тем громче звучит. Напряжённые аспекты не «плохие», это главный двигатель развития. Гармоничные не «хорошие»: это таланты, которыми легко не пользоваться.</p>
+
+<article class="card el-fire" style="margin-bottom:16px">
+  <div class="head"><div class="glyph">⚖</div><div><h3>Общий баланс</h3><div class="where">5 напряжённых · 4 гармоничных · 2 квинконса</div></div></div>
+  <p class="tldr">Самая «горячая» зона — эмоции и воля (Луна и Марс). Самая стабильная — голова и план (Солнце, Юпитер, Сатурн). Опирайся на второе, когда штормит первое.</p>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>У Марса нет ни одного гармоничного аспекта, у Луны только секстиль с Солнцем. Соединений между планетами почти нет, единственное (Юпитер–Плутон) спорное.</p>
+    <p><span class="tag t-i">Трактовка</span>Без соединений в личности нет одного «сплава», который тянет всё на себя: части существуют отдельно и общаются через аспекты.</p>
+  </details>
+</article>
+
+<div class="grid2">
+<article class="card el-fire"><div class="head"><div class="glyph sm">♂☍♇</div><div><h3>Марс ☍ Плутон</h3><div class="where"><span class="kind">оппозиция</span> орбис 3,6°</div></div></div>
+  <div class="meter">громкость <span class="bar"><i style="width:64%"></i></span></div>
+  <p class="tldr">Огромная выносливость и упрямство. Встречаешь сильных, давящих людей, пока не признаешь эту силу в себе.</p>
+  <div class="life"><b>Из жизни</b>Трудно уступить в споре, даже когда уже неважно, кто прав. Зато дожимаешь проекты, от которых другие отказались.</div>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Томпкинс связывает Марс и Плутон с выносливостью, концентрированным усилием и темами власти. Ось проходит через MC и IC: напряжение между карьерой и домом.</p></details></article>
+
+<article class="card el-water"><div class="head"><div class="glyph sm">☽□♂</div><div><h3>Луна □ Марс</h3><div class="where"><span class="kind">квадрат</span> орбис 1,6°</div></div></div>
+  <div class="meter">громкость <span class="bar"><i style="width:84%"></i></span></div>
+  <p class="tldr">Эмоция мгновенно превращается в действие, чаще всего в резкое слово. Но это и смелость в чувствах.</p>
+  <div class="life"><b>Лайфхак</b>Правило «десяти минут» перед ответом на эмоциональное сообщение.</div></article>
+
+<article class="card el-water"><div class="head"><div class="glyph sm">☽□♇</div><div><h3>Луна □ Плутон</h3><div class="where"><span class="kind">квадрат</span> орбис 2,1°</div></div></div>
+  <div class="meter">громкость <span class="bar"><i style="width:79%"></i></span></div>
+  <p class="tldr">Чувства «всё или ничего», трудно отпускать. Зато почти безошибочное чутьё на чужие скрытые мотивы.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>Томпкинс и Грин связывают аспект с темами контроля, ревности, страха потери. Ресурс — психологическая проницательность и способность пережить то, что ломает других. Психология как тема, а может, и профессия, может быть очень близка.</p></details></article>
+
+<article class="card el-earth"><div class="head"><div class="glyph sm">T□</div><div><h3>Тау-квадрат целиком</h3><div class="where"><span class="kind">мутабельный</span> выход через Деву</div></div></div>
+  <p class="tldr">Под стрессом тянет метаться и хвататься за всё. Помогает простое и скучное: список, шаги, одно дело руками.</p>
+  <details><summary>Подробно</summary><p><span class="tag t-i">Трактовка</span>По Тирни, мутабельный тау-квадрат реагирует на стресс сменой направления и суетой, зато хорошо адаптируется. Пустая нога в Деве — это не «отвлечься», а буквально подключить ту часть карты, которой конфигурации не хватает.</p></details></article>
+
+<article class="card el-air"><div class="head"><div class="glyph sm">☿⚻♄</div><div><h3>Меркурий ⚻ Сатурн</h3><div class="where"><span class="kind">квинконс</span> орбис 0,9° + рецепция</div></div></div>
+  <div class="meter">громкость <span class="bar"><i style="width:91%"></i></span></div>
+  <p class="tldr">Ум одновременно оригинальный и точный, но платит за это сомнениями. Трудно говорить, не подумав.</p>
+  <div class="life"><b>Где пригодится</b>Редактура, исследования, программирование, дизайн по сетке, наука.</div></article>
+
+<article class="card el-fire"><div class="head"><div class="glyph sm">♀□♅</div><div><h3>Венера □ Уран, ✶ Нептун</h3><div class="where"><span class="kind">квадрат</span> 1,4° · <span class="kind">секстиль</span> 3,5°</div></div></div>
+  <div class="meter">громкость <span class="bar"><i style="width:86%"></i></span></div>
+  <p class="tldr">Хочется одновременно сказки и свободы. Это не противоречие, а формат: много воздуха и много смысла сразу.</p>
+  <div class="life"><b>Из жизни</b>«Будь моим принцем, но не звони каждый день».</div></article>
+
+<article class="card el-earth"><div class="head"><div class="glyph sm">☉✶☽</div><div><h3>Солнце ✶ Луна, ⚻ Марс</h3><div class="where"><span class="kind">секстиль</span> 4,5° · <span class="kind">квинконс</span> 2,9°</div></div></div>
+  <div class="meter">громкость <span class="bar"><i style="width:55%"></i></span></div>
+  <p class="tldr">В целом ты в ладу с собой. Но бывает чувство «много делаю, но не то».</p>
+  <div class="life"><b>Вопрос к себе</b>Это ведёт к моей цели или просто занимает руки?</div></article>
+
+<article class="card el-earth"><div class="head"><div class="glyph sm">♃△♄</div><div><h3>Юпитер △ Сатурн</h3><div class="where"><span class="kind">тригон</span> орбис 2,1° · поколенческий</div></div></div>
+  <div class="meter">громкость <span class="bar"><i style="width:79%"></i></span></div>
+  <p class="tldr">Баланс «хочу больше» и «давай реалистично». Большие планы на удивление часто сбываются, если дать им время.</p></article>
+
+<article class="card el-water"><div class="head"><div class="glyph sm">♄☍♅</div><div><h3>Сатурн ☍ Уран</h3><div class="where"><span class="kind">оппозиция</span> орбис 7,8° · поколенческий</div></div></div>
+  <div class="meter">громкость <span class="bar"><i style="width:22%"></i></span></div>
+  <p class="tldr">Вечный внутренний спор «надёжно или интересно», особенно при выборе учёбы и работы.</p></article>
+
+<article class="card el-fire"><div class="head"><div class="glyph sm">∠</div><div><h3>Углы карты</h3><div class="where">Луна–Dsc 1,1° · Марс–MC 1,2° · Марс □ Асц 0,4°</div></div></div>
+  <p class="tldr">Планеты на углах — самые «громкие» в карте. Остаться незаметной сложно, даже если очень хочется: люди быстро считывают характер.</p></article>
+</div>
+
+<!-- ================= LOVE ================= -->
+<h2 id="love"><span class="pn">Часть 5</span>Любовь и отношения</h2>
+<p class="sub">Карта не знает, кого ты встретишь и когда. Она описывает только твой стиль: чего ты хочешь, как любишь и где можешь споткнуться.</p>
+
+<article class="card el-water" style="margin-bottom:16px">
+  <div class="head"><div class="glyph sm">♡</div><div><h3>Что отвечает за любовь в карте</h3><div class="where">Луна на Dsc · Венера □ Уран ✶ Нептун · 5-й дом Водолея</div></div></div>
+  <p class="tldr">Любовная сфера — одна из самых нагруженных в карте. Отношения для тебя не «приятное дополнение», а место, где проживаются самые сильные чувства.</p>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-f">Факт</span>За отношения в карте отвечают несколько положений:</p>
+    <ul>
+      <li>Луна стоит прямо на Десценденте, в 7-м доме.</li>
+      <li>Управители 7-го дома: Юпитер в Козероге в 4-м доме и Нептун в Водолее в 5-м.</li>
+      <li>Венера в Стрельце в 3-м доме, в квадрате к Урану и в секстиле к Нептуну.</li>
+      <li>В 5-м доме романтики стоят Меркурий и Нептун.</li>
+      <li>Марс в Близнецах на MC в квадрате к Луне.</li>
+    </ul>
+    <p><span class="tag t-i">Трактовка</span>7-й дом и его управители говорят о партнёрстве, Венера — о симпатии и вкусе, 5-й дом — о влюблённости и романе. Луна на Десценденте ставит эмоциональные потребности прямо в зону отношений, поэтому партнёр становится для тебя очень важен.</p>
+  </details>
+</article>
+
+<div class="grid2">
+<article class="card el-fire"><div class="head"><div class="glyph sm">💬</div><div><h3>Как ты влюбляешься</h3><div class="where">Венера в Стрельце, 3-й дом · Меркурий в 5-м</div></div></div>
+  <p class="nick">«Сначала голова, потом сердце»</p>
+  <p class="tldr">Через разговор, юмор и интересные идеи. Скучный красавец проигрывает смешному умнику с горящими глазами.</p>
+  <div class="life"><b>Из жизни</b>Ты влюбляешься в голосовые на четыре минуты и в то, как человек рассказывает про свою странную коллекцию.</div></article>
+
+<article class="card el-water"><div class="head"><div class="glyph sm">🫶</div><div><h3>Как ты выражаешь симпатию</h3><div class="where">Луна в Рыбах · Асц в Деве · Марс в Близнецах</div></div></div>
+  <p class="nick">«Забота делом и словом»</p>
+  <p class="tldr">Помнишь мелочи, помогаешь по делу, подкалываешь любя. Громких признаний меньше, чем реальной заботы.</p>
+  <div class="life"><b>Из жизни</b>«Я тебе скинула статью про то, о чём ты говорил неделю назад». Это и есть признание в любви.</div></article>
+
+<article class="card el-earth"><div class="head"><div class="glyph sm">🔑</div><div><h3>Что важно в партнёре</h3><div class="where">Юпитер в Козероге (класс. управитель 7-го) · Уран · Нептун</div></div></div>
+  <p class="nick">«Волшебник с ипотекой»</p>
+  <p class="tldr">Сразу четыре вещи: ум и юмор, свобода, глубина и надёжность. Найти всё это в одном человеке — главный квест.</p>
+  <details><summary>Подробно</summary>
+    <ul>
+      <li><b>Ум и юмор</b> (Венера в 3-м, Меркурий в 5-м): с ним интересно разговаривать.</li>
+      <li><b>Свобода</b> (Венера □ Уран): не душит, не требует отчёта каждый час.</li>
+      <li><b>Глубина и понимание без слов</b> (Луна в Рыбах): чувствует, а не только слушает.</li>
+      <li><b>Надёжность</b> (Юпитер в Козероге в 4-м доме): с ним можно строить дом, а не только гулять до утра.</li>
+    </ul>
+    <p><span class="tag t-g">Предположение</span>Сказка и стабильность одновременно. Звучит как противоречие, но это просто высокая планка.</p>
+  </details></article>
+
+<article class="card el-fire"><div class="head"><div class="glyph sm">⚡</div><div><h3>Где могут быть сложности</h3><div class="where">Луна □ Марс, □ Плутон · Нептун в 5-м · Венера □ Уран</div></div></div>
+  <p class="nick">«Слабые места»</p>
+  <p class="tldr">Идеализация, спасательство, ревность и контроль, резкие слова в ссоре, качели «ближе — дальше».</p>
+  <details><summary>Подробно</summary>
+    <ul>
+      <li><b>Идеализация</b> (Нептун в 5-м, Рыбы на Dsc): влюбиться в образ, а потом разочароваться в живом человеке.</li>
+      <li><b>Спасательство</b> (Луна в Рыбах в 7-м): тянет к тем, кого надо «вытащить».</li>
+      <li><b>Всё или ничего</b> (Луна □ Плутон): ревность, страх потери, желание контролировать.</li>
+      <li><b>Острый язык в ссоре</b> (Луна □ Марс): сказать то, что потом будешь три дня разгребать.</li>
+      <li><b>Свобода против близости</b> (Венера □ Уран против Луны в 7-м): хочется слиться и одновременно сбежать.</li>
+    </ul>
+  </details></article>
+</div>
+
+<article class="card el-water" style="margin-top:16px">
+  <div class="head"><div class="glyph sm">🎬</div><div><h3>Сценарии, которые символически выделяются</h3><div class="where">не предсказание, а типичные сюжеты для таких положений</div></div></div>
+  <p class="tldr">Три сюжета, от которых стоит держаться подальше, и один, к которому всё может прийти.</p>
+  <div class="contra">
+    <div><b>«Принц на облаке»</b>Влюблённость в потенциал, разочарование в реальности. Работа Нептуна.</div>
+    <div><b>«Качели»</b>Ближе-дальше, вместе-расстались-снова вместе. Работа Урана с Венерой.</div>
+    <div><b>«Спасательница»</b>Отношения как проект по спасению другого. Работа Луны в Рыбах.</div>
+    <div><b>«Соавторы»</b>Зрелая версия: партнёр-друг, с которым интересно, у каждого своё пространство и общий дом.</div>
+  </div>
+</article>
+
+<!-- ================= CAREER ================= -->
+<h2 id="career"><span class="pn">Часть 5</span>Карьера, деньги, реализация</h2>
+<p class="sub">Карта не выбирает профессию. Она показывает, какой стиль работы и какие темы могут зажигать.</p>
+<div class="grid2">
+<article class="card el-air"><div class="head"><div class="glyph">⌂</div><div><h3>Ключевые положения</h3><div class="where">MC в Близнецах · Марс на MC · Меркурий в 5-м · Парс Фортуны в 10-м</div></div></div>
+  <p class="nick">«Слово как инструмент»</p>
+  <p class="tldr">Призвание связано со словом, информацией и идеями, а делать это хочется самостоятельно и с удовольствием.</p>
+  <details><summary>Подробно</summary>
+    <p><span class="tag t-i">Трактовка</span>Близнецы на MC — профессии, где важны коммуникация и разнообразие. Марс на MC — инициатива и соревновательность. Управитель MC Меркурий в 5-м доме ведёт к реализации через творчество. Парс Фортуны в 10-м доме классически считается благоприятным для профессиональной сферы. Юпитер △ Сатурн даёт способность строить надолго, Солнце в Козероге — амбиции.</p>
+  </details></article>
+
+<article class="card el-earth"><div class="head"><div class="glyph sm">🧭</div><div><h3>Направления, которые могут быть интересны</h3><div class="where">варианты, а не предписание</div></div></div>
+  <p class="tldr">Слово и медиа, технологии и данные, психология, творчество и дизайн, обучение, исследования.</p>
+  <details><summary>Подробно</summary>
+    <ul>
+      <li><b>Тексты, медиа, блог, журналистика, PR, редактура:</b> Близнецы на MC, Меркурий в 5-м, Венера в 3-м.</li>
+      <li><b>IT, аналитика, данные, UX:</b> Меркурий в Водолее, Дева, Уран в 6-м.</li>
+      <li><b>Психология и работа с людьми:</b> Луна □ Плутон, Луна в Рыбах, Сатурн в 12-м.</li>
+      <li><b>Дизайн, музыка, визуальное творчество:</b> Нептун в 5-м, Венера ✶ Нептун, Весы на 2-м доме.</li>
+      <li><b>Преподавание и обучение:</b> ось 3–9 и Венера в Стрельце.</li>
+      <li><b>Исследования и наука:</b> Меркурий ⚻ Сатурн.</li>
+    </ul>
+    <p class="note">Карта описывает склонности. Реальный выбор зависит от того, что тебе нравится делать, а не от звёзд.</p>
+  </details></article>
+
+<article class="card el-fire"><div class="head"><div class="glyph sm">🏃</div><div><h3>Как ты работаешь</h3><div class="where">Козерог · Дева · Марс на MC · Уран в 6-м</div></div></div>
+  <p class="nick">«Ответственный бунтарь»</p>
+  <p class="tldr">Ответственная и придирчивая к качеству, но плохо переносит контроль сверху и однообразие. Есть привычка к спринтам перед дедлайном.</p>
+  <div class="life"><b>Из жизни</b>Начальник говорит «сделай вот так», а ты уже знаешь, как сделать лучше. И делаешь лучше, но по-своему.</div></article>
+
+<article class="card el-air"><div class="head"><div class="glyph sm">₽</div><div><h3>Деньги</h3><div class="where">2-й дом в Весах · Венера в 3-м □ Уран · Юпитер в Козероге</div></div></div>
+  <p class="nick">«Копилка и билет на самолёт»</p>
+  <p class="tldr">Несколько источников дохода и неровный поток. Внутри борются два импульса: «отложить» (Юпитер в Козероге) и «потратить на впечатления» (Венера в Стрельце).</p>
+  <div class="life"><b>Совет карты</b>Отдельная копилка «на поездки» снимает внутренний спор.</div></article>
+</div>
+
+<article class="card el-earth" style="margin-top:16px">
+  <div class="head"><div class="glyph sm">🚀</div><div><h3>Амбиции и самостоятельность</h3><div class="where">Солнце в Козероге · Марс на MC ☍ Плутон · Юпитер △ Сатурн · Уран в 6-м</div></div></div>
+  <p class="tldr">Амбиции серьёзные, но тихие. Не «хочу славы», а «хочу, чтобы было по-настоящему хорошо и по-моему». Своё дело, фриланс или роль ведущего специалиста символически подходят больше, чем жёсткая иерархия.</p>
+</article>
+
+<!-- ================= HONEST ================= -->
+<h2 id="honest"><span class="pn">Часть 5</span>Честно о себе</h2>
+<p class="sub">Без лести: что помогает, что мешает и куда расти.</p>
+<div class="grid2">
+<article class="card el-earth"><div class="head"><div class="glyph">+</div><div><h3>Что помогает</h3></div></div>
+  <ul>
+    <li><b>Выносливость:</b> Марс ☍ Плутон, Козерог.</li>
+    <li><b>Наблюдательность и чутьё на людей:</b> Дева и Луна в Рыбах.</li>
+    <li><b>Острый оригинальный ум:</b> Меркурий в Водолее.</li>
+    <li><b>Адаптивность:</b> мутабельный крест.</li>
+    <li><b>Ответственность и умение строить надолго:</b> Юпитер △ Сатурн.</li>
+    <li><b>Эмпатия и воображение:</b> Луна в Рыбах, Нептун в 5-м доме.</li>
+  </ul></article>
+
+<article class="card el-fire"><div class="head"><div class="glyph">−</div><div><h3>Что может мешать</h3></div></div>
+  <ul>
+    <li><b>Перфекционизм и самокритика:</b> внутренний ОТК.</li>
+    <li><b>Острый язык под горячую руку:</b> Луна □ Марс.</li>
+    <li><b>Всё или ничего в чувствах:</b> Луна □ Плутон.</li>
+    <li><b>Распыление и спринты в последнюю ночь:</b> мутабельность, ретро-Марс.</li>
+    <li><b>Гиперответственность и «справлюсь сама»:</b> Козерог.</li>
+    <li><b>Идеализация в любви:</b> Нептун.</li>
+  </ul></article>
+</div>
+
+<h2 style="font-size:22px;margin-top:32px">Точки роста</h2>
+<div class="contra">
+  <div><b>Выкладывать «сырое»</b>Показывать работу раньше, чем ОТК поставит штамп «идеально». Иначе её не увидит никто.</div>
+  <div><b>Пауза перед ответом</b>Десять минут между эмоцией и сообщением экономят три дня сожалений.</div>
+  <div><b>Границы в эмпатии</b>Чувствовать других не значит отвечать за их настроение.</div>
+  <div><b>Один проект до конца</b>Из десяти начатых доведённый один стоит больше, чем все остальные.</div>
+  <div><b>Просить о помощи</b>Это не слабость, а делегирование. Козерогу так понятнее.</div>
+  <div><b>Видеть живого человека</b>В любви смотреть на того, кто перед тобой, а не на его потенциал.</div>
+</div>
+
+<!-- ================= UNUSUAL ================= -->
+<h2 id="unusual"><span class="pn">Часть 5</span>Необычные сочетания</h2>
+<p class="sub">Что в этой карте выделяется сильнее всего.</p>
+<div class="grid2">
+<article class="card el-fire"><div class="head"><div class="glyph">✚</div><div><h3>Все четыре угла заняты</h3></div></div>
+  <p class="tldr">Такое бывает не в каждой карте. Плюс тау-квадрат, пустая нога которого попадает прямо на Асцендент. Напряжение и выход из него встроены в сам каркас карты.</p></article>
+<article class="card el-air"><div class="head"><div class="glyph sm">☿♄</div><div><h3>Договор с конфликтом</h3></div></div>
+  <p class="tldr">Меркурий и Сатурн одновременно во взаимной рецепции (союз) и в точном квинконсе (несовпадение языков). Как двое соавторов, которые всё время спорят, но книгу пишут вместе.</p></article>
+<article class="card el-air"><div class="head"><div class="glyph sm">Asc=MC</div><div><h3>Один управитель у «я» и у карьеры</h3></div></div>
+  <p class="tldr">Меркурий управляет и Асцендентом, и MC, а стоит в доме творчества. Кто ты и кем работаешь, в карте ведёт к одному: делать то, что интересно уму.</p></article>
+<article class="card el-earth"><div class="head"><div class="glyph sm">☉←♄</div><div><h3>Тихий директор и скрытый босс</h3></div></div>
+  <p class="tldr">Солнце в 4-м доме подчиняется Сатурну в 12-м. Даже твоя «главная» часть работает из-за кулис, а главный критик невидим.</p></article>
+<article class="card el-water"><div class="head"><div class="glyph sm">☽→♆♃</div><div><h3>Цепочка Луны</h3></div></div>
+  <p class="tldr">Эмоции живут в отношениях (7-й дом), а управляют ими Нептун в творчестве (5-й) и Юпитер в доме (4-й). Чувства → любовь → творчество и дом. Это одна линия.</p></article>
+<article class="card el-fire"><div class="head"><div class="glyph sm">♀↔♅♆</div><div><h3>Венера между двумя дальними планетами</h3></div></div>
+  <p class="tldr">Уран тянет к свободе, Нептун к сказке. Отсюда и запрос «волшебник, но не звони каждый день».</p></article>
+</div>
+
+<!-- ================= FINAL ================= -->
+<h2 id="final"><span class="pn">Финал</span>Итоговый портрет</h2>
+<article class="card el-water">
+  <p class="nick" style="font-size:18px">Человек, который держит крест на плечах и делает из него опору</p>
+  <p>Снаружи ты собранная, наблюдательная и ироничная Дева, которой можно доверить ключи, деньги и чужой секрет. Внутри живёт рыбья Луна, которая чувствует всё и всех, и она стоит прямо там, где начинаются отношения. На самой вершине карты Марс в Близнецах — острый язык, воля и «меня нельзя заставить, но можно увлечь». В корнях Плутон — ощущение, что выдержишь почти всё. А за кулисами сидит строгий редактор, который тихо проверяет каждую мысль.</p>
+  <div class="pros">
+    <div><b>Главные черты</b>Ответственность, острый ум, чутьё на людей, упрямство, самоирония.</div>
+    <div><b>Противоречия</b>Контроль и растворение, свобода и близость, скорость и глубина, сцена и нора.</div>
+    <div><b>Жизненные темы</b>Свой дом и корни, творчество как способ чувствовать, отношения как место роста, карьера через слово.</div>
+    <div><b>Суперсила</b>Превращать шторм в структуру. Когда всё кипит, ты делаешь список, и это работает.</div>
+  </div>
+  <div class="life"><b>Если в одной фразе</b>Тихий директор с острым языком и океаном внутри, который учится выпускать в мир то, что пока прячет в стол.</div>
+</article>
+
+<!-- ================= DATA ================= -->
+<h2 id="data"><span class="pn">Для любопытных</span>Таблицы</h2>
+<div class="tbl"><table>
+<thead><tr><th>Планета</th><th>Знак</th><th>Дом</th><th>Заметка</th></tr></thead>
+<tbody>
+<tr><td>☉ Солнце</td><td>Козерог</td><td class="n">4</td><td></td></tr>
+<tr><td>☽ Луна</td><td>Рыбы</td><td class="n">7</td><td>на Десценденте</td></tr>
+<tr><td>☿ Меркурий</td><td>Водолей</td><td class="n">5</td><td>управитель Асц и MC</td></tr>
+<tr><td>♀ Венера</td><td>Стрелец</td><td class="n">3</td><td></td></tr>
+<tr><td>♂ Марс R</td><td>Близнецы</td><td class="n">10</td><td>на MC</td></tr>
+<tr><td>♃ Юпитер</td><td>Козерог</td><td class="n">4</td><td></td></tr>
+<tr><td>♄ Сатурн R</td><td>Дева</td><td class="n">12</td><td></td></tr>
+<tr><td>♅ Уран</td><td>Рыбы</td><td class="n">6</td><td></td></tr>
+<tr><td>♆ Нептун</td><td>Водолей</td><td class="n">5</td><td></td></tr>
+<tr><td>♇ Плутон</td><td>Стрелец</td><td class="n">4</td><td>у IC</td></tr>
+<tr><td>☊ / ☋ Узлы</td><td>Водолей / Лев</td><td class="n">5 / 11</td><td></td></tr>
+<tr><td>⊗ Парс Фортуны</td><td>Рак</td><td class="n">10</td><td>ночная формула</td></tr>
+</tbody></table></div>
+<p class="note">Аспекты, которых не было в таблице сайта-калькулятора, но которые есть при стандартных орбисах: Марс ☍ Плутон, Плутон ☌ IC, Венера ✶ Нептун, Юпитер ☌ Плутон (спорный, через границу знаков). Венера ☍ Марс и Луна ☌ Уран слишком широкие, учтены только как фон. Хирон и Лилит не рассматривались.</p>
+
+
+<footer>Символическое прочтение карты. Оно не предсказывает события и не заменяет ни психолога, ни здравый смысл.</footer>
+</div>
+
+<script>
+(function(){
+  var btn=document.getElementById('toggle-all');
+  if(!btn) return;
+  btn.addEventListener('click',function(){
+    var ds=document.querySelectorAll('details');
+    var anyClosed=Array.prototype.some.call(ds,function(d){return !d.open});
+    ds.forEach(function(d){d.open=anyClosed});
+    btn.textContent=anyClosed?'Свернуть подробности':'Раскрыть всё подробно';
+  });
+})();
+</script>
+</body>
+</html>
